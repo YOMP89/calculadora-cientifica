@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Científica con Tutoriales</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 3fr 2fr;
+            gap: 20px;
+        }
+        #calculator {
+            background: #2c2c2c;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        #display {
+            background: #3d3d3d;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            height: 50px;
+            font-size: 1.2em;
+            text-align: right;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        .button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #555;
+        }
+        .function-btn {
+            background: #007bff;
+        }
+        #tutorial {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            height: 600px;
+            overflow-y: auto;
+        }
+        #graphCanvas {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="calculator">
+        <div id="display">0</div>
+        <div class="buttons">
+            <button class="button" data-value="7">7</button>
+            <button class="button" data-value="8">8</button>
+            <button class="button" data-value="9">9</button>
+            <button class="button function-btn" data-value="sin">sin</button>
+            <button class="button function-btn" data-value="cos">cos</button>
+            <button class="button" data-value="4">4</button>
+            <button class="button" data-value="5">5</button>
+            <button class="button" data-value="6">6</button>
+            <button class="button function-btn" data-value="tan">tan</button>
+            <button class="button" data-value="1">1</button>
+            <button class="button" data-value="2">2</button>
+            <button class="button" data-value="3">3</button>
+            <button class="button" data-value="*">×</button>
+            <button class="button" data-value="/">÷</button>
+            <button class="button" data-value="0">0</button>
+            <button class="button" data-value=".">.</button>
+            <button class="button" data-value="=">=</button>
+            <button class="button" data-value="+">+</button>
+            <button class="button" data-value="-">-</button>
+            <button class="button" data-value="clear">C</button>
+        </div>
+    </div>
+
+    <div id="tutorial">
+        <h2>Tutorial de Operaciones</h2>
+        <div id="explanation"></div>
+        <canvas id="graphCanvas"></canvas>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        const explanation = document.getElementById('explanation');
+        const buttons = document.querySelectorAll('.button');
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let currentInput = '';
+        let currentOperation = null;
+        let firstOperand = null;
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => handleButtonClick(button.getAttribute('data-value')));
+        });
+
+        function handleButtonClick(value) {
+            if (value === 'clear') {
+                clearDisplay();
+                return;
+            }
+
+            if (['+', '-', '*', '/'].includes(value)) {
+                handleOperator(value);
+                return;
+            }
+
+            if (value === '=') {
+                calculateResult();
+                return;
+            }
+
+            if (['sin', 'cos', 'tan'].includes(value)) {
+                handleFunction(value);
+                return;
+            }
+
+            currentInput += value;
+            display.textContent = currentInput;
+        }
+
+        function handleOperator(operator) {
+            if (currentInput === '') return;
+            firstOperand = parseFloat(currentInput);
+            currentOperation = operator;
+            currentInput = '';
+        }
+
+        function calculateResult() {
+            if (currentOperation === null || currentInput === '') return;
+
+            const secondOperand = parseFloat(currentInput);
+            let result;
+
+            switch(currentOperation) {
+                case '+':
+                    result = firstOperand + secondOperand;
+                    showExplanation(`Suma: ${firstOperand} + ${secondOperand} = ${result}`);
+                    break;
+                case '-':
+                    result = firstOperand - secondOperand;
+                    showExplanation(`Resta: ${firstOperand} - ${secondOperand} = ${result}`);
+                    break;
+                case '*':
+                    result = firstOperand * secondOperand;
+                    showExplanation(`Multiplicación: ${firstOperand} × ${secondOperand} = ${result}`);
+                    break;
+                case '/':
+                    result = firstOperand / secondOperand;
+                    showExplanation(`División: ${firstOperand} ÷ ${secondOperand} = ${result}`);
+                    break;
+            }
+
+            currentInput = result.toString();
+            display.textContent = result;
+            currentOperation = null;
+        }
+
+        function handleFunction(func) {
+            if (currentInput === '') return;
+
+            const angle = parseFloat(currentInput);
+            const radians = angle * Math.PI / 180;
+            let result;
+
+            switch(func) {
+                case 'sin':
+                    result = Math.sin(radians).toFixed(4);
+                    showExplanation(`Seno de ${angle}°: sin(${angle}) = ${result}`);
+                    drawGraph('sin');
+                    break;
+                case 'cos':
+                    result = Math.cos(radians).toFixed(4);
+                    showExplanation(`Coseno de ${angle}°: cos(${angle}) = ${result}`);
+                    drawGraph('cos');
+                    break;
+                case 'tan':
+                    result = Math.tan(radians).toFixed(4);
+                    showExplanation(`Tangente de ${angle}°: tan(${angle}) = ${result}`);
+                    drawGraph('tan');
+                    break;
+            }
+
+            currentInput = result.toString();
+            display.textContent = result;
+        }
+
+        function showExplanation(text) {
+            explanation.innerHTML = `<p>${text}</p>`;
+        }
+
+        function drawGraph(func) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 2;
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const scale = 30;
+            const offsetX = width/2;
+            const offsetY = height/2;
+
+            ctx.moveTo(0, offsetY);
+            ctx.lineTo(width, offsetY);
+            ctx.moveTo(offsetX, 0);
+            ctx.lineTo(offsetX, height);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#ff0000';
+            ctx.moveTo(0, offsetY - Math[func](0)*scale);
+
+            for(let x = -offsetX; x < offsetX; x += 0.1) {
+                const y = Math[func](x / scale) * scale;
+                ctx.lineTo(offsetX + x*scale, offsetY - y);
+            }
+
+            ctx.stroke();
+            explanation.innerHTML += `<p>Gráfica de ${func}(x) generada</p>`;
+        }
+
+        function clearDisplay() {
+            currentInput = '';
+            currentOperation = null;
+            firstOperand = null;
+            display.textContent = '0';
+            explanation.innerHTML = '';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    </script>
+</body>
+</html>
